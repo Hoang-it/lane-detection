@@ -1,6 +1,6 @@
 import collections
 
-from clrnet.utils import build_from_cfg
+from models.clrnet.utils import build_from_cfg
 
 class Process(object):
     """Compose multiple process sequentially.

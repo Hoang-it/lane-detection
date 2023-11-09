@@ -1,10 +1,10 @@
 from mmengine.model import BaseModel
-from losses.focal_loss import FocalLoss
+from models.clrnet.losses.focal_loss import FocalLoss
 import torch
-from utils.dynamic_assign import assign
-from losses.lineiou_loss import liou_loss
+from models.clrnet.utils.dynamic_assign import assign
+from models.clrnet.losses.lineiou_loss import liou_loss
 import torch.nn.functional as F
-from losses.accuracy import accuracy
+from models.clrnet.losses.accuracy import accuracy
 
 class Detector(BaseModel):
     def __init__(self,

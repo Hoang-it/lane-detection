@@ -7,15 +7,15 @@ import torch.nn as nn
 import torch.nn.functional as F
 from mmcv.cnn import ConvModule
 
-from clrnet.utils.lane import Lane
-from losses.focal_loss import FocalLoss
-from losses.accuracy import accuracy
-from clrnet.ops import nms
+from models.clrnet.utils.lane import Lane
+from models.clrnet.losses.focal_loss import FocalLoss
+from models.clrnet.losses.accuracy import accuracy
+from models.clrnet.ops import nms
 
-from utils.roi_gather import ROIGather, LinearModule
-from utils.seg_decoder import SegDecoder
-from utils.dynamic_assign import assign
-from losses.lineiou_loss import liou_loss
+from models.clrnet.utils.roi_gather import ROIGather, LinearModule
+from models.clrnet.utils.seg_decoder import SegDecoder
+from models.clrnet.utils.dynamic_assign import assign
+from models.clrnet.losses.lineiou_loss import liou_loss
 
 class CLRHead(nn.Module):
     def __init__(self,

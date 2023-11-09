@@ -1,5 +1,5 @@
 import torch
-from losses.lineiou_loss import line_iou
+from models.clrnet.losses.lineiou_loss import line_iou
 
 
 def distance_cost(predictions, targets, img_w):

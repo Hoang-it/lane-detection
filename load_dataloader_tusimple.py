@@ -1,11 +1,11 @@
 import os.path as osp
 import numpy as np
 import json
-from dataset.base_dataset import BaseDataset
-from utils.tusimple_metric import LaneEval
+from models.clrnet.dataset.base_dataset import BaseDataset
+from models.clrnet.utils.tusimple_metric import LaneEval
 import random
 from torch.utils.data import DataLoader
-from landet.mmengine.runner import Runner
+from mmengine.runner import Runner
 
 SPLIT_FILES = {
     'trainval': dict(anns=[r'train_set\label_data_0313.json', r'train_set\label_data_0601.json', r'train_set\label_data_0531.json'], prefix='train_set'),
@@ -110,8 +110,8 @@ cfg = dict(
     max_lanes = 5
 )
 
-from clrnet.dataset.process.generate_lane_line import GenerateLaneLine
-import clrnet.dataset.process.transforms as  clrtransforms
+from models.clrnet.dataset.process.generate_lane_line import GenerateLaneLine
+import models.clrnet.dataset.process.transforms as  clrtransforms
 
 img_h = 320
 img_w = 800

@@ -2,8 +2,8 @@ import os.path as osp
 import cv2
 from torchvision.datasets import VisionDataset
 import logging
-from clrnet.utils.visualization import imshow_lanes
-from clrnet.dataset.process import Process
+from models.clrnet.utils.visualization import imshow_lanes
+from models.clrnet.dataset.process import Process
     
 class BaseDataset(VisionDataset):
     def __init__(self, data_root, split, processes=None, cfg:dict=None):

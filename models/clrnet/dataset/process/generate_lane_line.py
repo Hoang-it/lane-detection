@@ -5,7 +5,7 @@ import imgaug.augmenters as iaa
 from imgaug.augmentables.lines import LineString, LineStringsOnImage
 from imgaug.augmentables.segmaps import SegmentationMapsOnImage
 from scipy.interpolate import InterpolatedUnivariateSpline
-from clrnet.dataset.process.transforms import CLRTransforms
+from models.clrnet.dataset.process.transforms import CLRTransforms
 
 
 
