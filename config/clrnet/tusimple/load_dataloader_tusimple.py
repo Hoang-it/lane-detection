@@ -28,6 +28,8 @@ class TuSimple(BaseDataset):
         max_lanes = 0
         for anno_file in self.anno_files:
             anno_file = osp.join(self.data_root, anno_file)
+            if not osp.exists(anno_file):
+                continue
             with open(anno_file, 'r') as anno_obj:
                 lines = anno_obj.readlines()
             for line in lines[:self.size_limit]:
