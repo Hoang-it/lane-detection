@@ -32,7 +32,7 @@ runner = Runner(
     default_hooks=dict(checkpoint=dict(type='CheckpointHook', interval=1)),  
     cfg=dict(model_wrapper_cfg=dict(type='MMFullyShardedDataParallel', cpu_offload=True)),
     # for resume  
-    load_from='./work_di/tusimple/epoch_24.pth',
+    # load_from='./work_di/tusimple/epoch_24.pth',
     # resume=True,
 )
 
