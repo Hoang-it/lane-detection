@@ -90,132 +90,136 @@ class TuSimple(BaseDataset):
         self.logger.info(result)
         return acc
          
-# define data loader
-import torch
-import torchvision.transforms as transforms
+def build_tusimple_dataloader(root: str = r'F:\LuanVan\Datasets\TUSimple'):
 
-norm_cfg = dict(mean=[0.486, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-transform = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize(**norm_cfg)
-])
+    # define data loader
+    import torch
+    import torchvision.transforms as transforms
 
-cfg = dict(
-    cut_height = 0,
-    img_norm = dict(mean=[103.939, 116.779, 123.68], std=[1., 1., 1.]),
-    ori_img_w = 1280,
-    ori_img_h = 720,
-    img_h = 320,
-    img_w = 800, 
-    num_points = 72,
-    max_lanes = 5,
-    size_limit = 32
-)
+    norm_cfg = dict(mean=[0.486, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize(**norm_cfg)
+    ])
 
-from models.clrnet.dataset.process.generate_lane_line import GenerateLaneLine
-import models.clrnet.dataset.process.transforms as  clrtransforms
+    cfg = dict(
+        cut_height = 0,
+        img_norm = dict(mean=[103.939, 116.779, 123.68], std=[1., 1., 1.]),
+        ori_img_w = 1280,
+        ori_img_h = 720,
+        img_h = 320,
+        img_w = 800, 
+        num_points = 72,
+        max_lanes = 5,
+        size_limit = 32000
+    )
 
-img_h = 320
-img_w = 800
+    from models.clrnet.dataset.process.generate_lane_line import GenerateLaneLine
+    import models.clrnet.dataset.process.transforms as  clrtransforms
 
-train_processes = [
-    GenerateLaneLine(
+    img_h = 320
+    img_w = 800
+
+    train_processes = [
+        GenerateLaneLine(
+            cfg=cfg,
+            transforms=[
+                dict(name='Resize',
+                    parameters=dict(size=dict(height=img_h, width=img_w)),
+                    p=1.0),
+                dict(name='HorizontalFlip', parameters=dict(p=1.0), p=0.5),
+                dict(name='ChannelShuffle', parameters=dict(p=1.0), p=0.1),
+                dict(name='MultiplyAndAddToBrightness',
+                    parameters=dict(mul=(0.85, 1.15), add=(-10, 10)),
+                    p=0.6),
+                dict(name='AddToHueAndSaturation',
+                    parameters=dict(value=(-10, 10)),
+                    p=0.7),
+                dict(name='OneOf',
+                    transforms=[
+                        dict(name='MotionBlur', parameters=dict(k=(3, 5))),
+                        dict(name='MedianBlur', parameters=dict(k=(3, 5)))
+                    ],
+                    p=0.2),
+                dict(name='Affine',
+                    parameters=dict(translate_percent=dict(x=(-0.1, 0.1),
+                                                            y=(-0.1, 0.1)),
+                                    rotate=(-10, 10),
+                                    scale=(0.8, 1.2)),
+                    p=0.7),
+                dict(name='Resize',
+                    parameters=dict(size=dict(height=img_h, width=img_w)),
+                    p=1.0),
+            ]
+        ),
+        clrtransforms.ToTensor(keys=['img', 'lane_line', 'seg']),
+        
+    ]
+
+    val_process = [
+        GenerateLaneLine(
+            cfg=cfg,
+            transforms=[
+                dict(name='Resize',
+                    parameters=dict(size=dict(height=img_h, width=img_w)),
+                    p=1.0),
+            ],
+            training=False),
+        clrtransforms.ToTensor(keys=['img']),
+    ]
+
+    dataset = TuSimple(
+        root,
+        split='trainval',
         cfg=cfg,
-        transforms=[
-            dict(name='Resize',
-                 parameters=dict(size=dict(height=img_h, width=img_w)),
-                 p=1.0),
-            dict(name='HorizontalFlip', parameters=dict(p=1.0), p=0.5),
-            dict(name='ChannelShuffle', parameters=dict(p=1.0), p=0.1),
-            dict(name='MultiplyAndAddToBrightness',
-                 parameters=dict(mul=(0.85, 1.15), add=(-10, 10)),
-                 p=0.6),
-            dict(name='AddToHueAndSaturation',
-                 parameters=dict(value=(-10, 10)),
-                 p=0.7),
-            dict(name='OneOf',
-                 transforms=[
-                     dict(name='MotionBlur', parameters=dict(k=(3, 5))),
-                     dict(name='MedianBlur', parameters=dict(k=(3, 5)))
-                 ],
-                 p=0.2),
-            dict(name='Affine',
-                 parameters=dict(translate_percent=dict(x=(-0.1, 0.1),
-                                                        y=(-0.1, 0.1)),
-                                 rotate=(-10, 10),
-                                 scale=(0.8, 1.2)),
-                 p=0.7),
-            dict(name='Resize',
-                 parameters=dict(size=dict(height=img_h, width=img_w)),
-                 p=1.0),
-        ]
-    ),
-    clrtransforms.ToTensor(keys=['img', 'lane_line', 'seg']),
-    
-]
-
-val_process = [
-    GenerateLaneLine(
+        processes=train_processes
+    )
+    val= TuSimple(
+        root,
+        split='test',
         cfg=cfg,
-        transforms=[
-             dict(name='Resize',
-                  parameters=dict(size=dict(height=img_h, width=img_w)),
-                  p=1.0),
-         ],
-         training=False),
-    clrtransforms.ToTensor(keys=['img']),
-]
+        processes=val_process
+    )
+    test= TuSimple(
+        root,
+        split='test',
+        cfg=cfg,
+        processes=val_process
+    )
+        
+    print(f"Load dataset with size : {len(dataset)}")
+    print(f"Load test with size : {len(test)}")
+    print(f"Load val with size : {len(val)}")
 
-dataset = TuSimple(
-    r'F:\LuanVan\Datasets\TUSimple',
-    split='trainval',
-    cfg=cfg,
-    processes=train_processes
-)
-val= TuSimple(
-    r'F:\LuanVan\Datasets\TUSimple',
-    split='test',
-    cfg=cfg,
-    processes=val_process
-)
-test= TuSimple(
-    r'F:\LuanVan\Datasets\TUSimple',
-    split='test',
-    cfg=cfg,
-    processes=val_process
-)
+    # visualize
+    # from utils.visualization import imshow_lanes
+    # idx = 1
+    # imshow_lanes(dataset[idx]['img'], dataset[idx]['lanes'], show=True)
+
+    batch_size = 16 
+    train_dataloader = dict(
+        batch_size = batch_size,
+        dataset = dataset,
+        sampler = dict(type='DefaultSampler', shuffle=True),
+        collate_fn=dict(type='default_collate')
+    )
+
+    val_dataloader = dict(
+        batch_size = batch_size,
+        dataset = val,
+        sampler = dict(type='DefaultSampler', shuffle=True),
+        collate_fn=dict(type='default_collate')
+    )
+
+    test_dataloader = dict(
+        batch_size = batch_size,
+        dataset = test,
+        sampler = dict(type='DefaultSampler', shuffle=True),
+        collate_fn=dict(type='default_collate')
+    )
+
+    train_dataloader = Runner.build_dataloader(train_dataloader)
+    val_dataloader = Runner.build_dataloader(val_dataloader)
+    test_dataloader = Runner.build_dataloader(test_dataloader)
     
-print(f"Load dataset with size : {len(dataset)}")
-print(f"Load test with size : {len(test)}")
-print(f"Load val with size : {len(val)}")
-
-# visualize
-# from utils.visualization import imshow_lanes
-# idx = 1
-# imshow_lanes(dataset[idx]['img'], dataset[idx]['lanes'], show=True)
-
-batch_size = 16 
-train_dataloader = dict(
-    batch_size = batch_size,
-    dataset = dataset,
-    sampler = dict(type='DefaultSampler', shuffle=True),
-    collate_fn=dict(type='default_collate')
-)
-
-val_dataloader = dict(
-    batch_size = batch_size,
-    dataset = val,
-    sampler = dict(type='DefaultSampler', shuffle=True),
-    collate_fn=dict(type='default_collate')
-)
-
-test_dataloader = dict(
-    batch_size = batch_size,
-    dataset = test,
-    sampler = dict(type='DefaultSampler', shuffle=True),
-    collate_fn=dict(type='default_collate')
-)
-
-train_dataloader = Runner.build_dataloader(train_dataloader)
-val_dataloader = Runner.build_dataloader(val_dataloader)
-test_dataloader = Runner.build_dataloader(test_dataloader)
+    return train_dataloader, val_dataloader, test_dataloader
