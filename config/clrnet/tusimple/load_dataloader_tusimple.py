@@ -18,6 +18,7 @@ class TuSimple(BaseDataset):
     def __init__(self, data_root, split, processes=None, cfg:dict=None):
         super().__init__(data_root, split, processes, cfg)
         self.anno_files, self.prefix = SPLIT_FILES[split].values()
+        self.size_limit = cfg.get('size_limit')
         self.load_annotations()
         self.h_samples = list(range(160, 720, 10))
 
@@ -29,7 +30,7 @@ class TuSimple(BaseDataset):
             anno_file = osp.join(self.data_root, anno_file)
             with open(anno_file, 'r') as anno_obj:
                 lines = anno_obj.readlines()
-            for line in lines:
+            for line in lines[:self.size_limit]:
                 data = json.loads(line)
                 y_samples = data['h_samples']
                 gt_lanes = data['lanes']
@@ -107,7 +108,8 @@ cfg = dict(
     img_h = 320,
     img_w = 800, 
     num_points = 72,
-    max_lanes = 5
+    max_lanes = 5,
+    size_limit = 32
 )
 
 from models.clrnet.dataset.process.generate_lane_line import GenerateLaneLine

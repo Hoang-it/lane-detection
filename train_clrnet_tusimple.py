@@ -1,10 +1,10 @@
 import os
 
 # define dataset                 
-from load_dataloader_tusimple import train_dataloader, test_dataloader, val_dataloader
+from config.clrnet.tusimple.load_dataloader_tusimple import train_dataloader, test_dataloader, val_dataloader
 
 # Model
-from load_model_tusimple import model
+from config.clrnet.tusimple.load_model_tusimple import model
 
 # Loss
 from models.clrnet.losses.accuracy import Accuracy
@@ -26,10 +26,13 @@ runner = Runner(
     val_dataloader=val_dataloader,
     val_cfg=dict(),
     val_evaluator=dict(type=Accuracy),
+    test_dataloader=test_dataloader,
+    test_cfg=dict(),
+    test_evaluator=dict(type=Accuracy),
     default_hooks=dict(checkpoint=dict(type='CheckpointHook', interval=1)),  
     cfg=dict(model_wrapper_cfg=dict(type='MMFullyShardedDataParallel', cpu_offload=True)),
     # for resume  
-    # load_from='./work_dir/epoch_1.pth',
+    load_from='./work_di/tusimple/epoch_24.pth',
     # resume=True,
 )
 

@@ -1,7 +1,7 @@
 import mmcv
 import torch.nn as nn
 import torch
-
+from models.clrnet.losses.lineiou_loss import line_iou
 def accuracy(pred, target, topk=1, thresh=None):
     """Calculate accuracy according to the prediction and target.
 
@@ -32,6 +32,8 @@ def accuracy(pred, target, topk=1, thresh=None):
     if pred.size(0) == 0:
         accu = [pred.new_tensor(0.) for i in range(len(topk))]
         return accu[0] if return_single else accu
+    
+    #print(f"pred.ndim {pred.ndim}")
     assert pred.ndim == 2 and target.ndim == 1
     assert pred.size(0) == target.size(0)
     assert maxk <= pred.size(1), \
@@ -49,7 +51,9 @@ def accuracy(pred, target, topk=1, thresh=None):
     return res[0] if return_single else res
 
 
-class Accuracy(nn.Module):
+from mmengine.evaluator import BaseMetric
+
+class Accuracy(BaseMetric):
     def __init__(self, topk=(1, ), thresh=None):
         """Module to calculate the accuracy.
 
@@ -62,7 +66,7 @@ class Accuracy(nn.Module):
         super().__init__()
         self.topk = topk
         self.thresh = thresh
-
+    
     def forward(self, pred, target):
         """Forward function to calculate accuracy.
 
@@ -74,3 +78,26 @@ class Accuracy(nn.Module):
             tuple[float]: The accuracies under different topk criterions.
         """
         return accuracy(pred, target, self.topk, self.thresh)
+    
+    
+    def process(self, data_batch, data_samples):
+        pred = data_batch[0]
+        target = data_samples[0]
+        
+        print(f"data_batch {len(data_batch)}")
+        print(f"data_batch {data_batch[0].shape}")
+        print(f"data_samples {data_samples[1].shape}")
+        print(f"data_samples {len(data_samples)}")
+        score, gt = data_samples
+        # save the middle result of a batch to `self.results`
+        self.results.append({
+            'batch_size': len(gt),
+            'correct': line_iou(pred, target, 800),
+        })
+    
+    def compute_metrics(self, results):
+        total_correct = sum(item['correct'] for item in results)
+        total_size = sum(item['batch_size'] for item in results)
+        # return the dict containing the eval results
+        # the key is the name of the metric name
+        return dict(accuracy= 100 * total_correct / total_size)
