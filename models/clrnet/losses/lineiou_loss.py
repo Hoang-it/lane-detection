@@ -15,6 +15,8 @@ def line_iou(pred, target, img_w, length=15, aligned=True):
     px2 = pred + length
     tx1 = target - length
     tx2 = target + length
+    # print(f"{pred.shape} {px2.shape}")
+    # print(f"{target.shape} {tx2.shape}")
     if aligned:
         invalid_mask = target
         ovr = torch.min(px2, tx2) - torch.max(px1, tx1)

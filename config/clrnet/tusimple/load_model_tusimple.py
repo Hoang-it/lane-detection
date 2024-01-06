@@ -10,6 +10,7 @@ backbone = ResNetWrapper(
     out_conv=False,
 )
 
+max_lanes = 5
 heads = CLRHead(
     num_priors=192,
     refine_layers=3,
@@ -20,7 +21,12 @@ heads = CLRHead(
         img_w = 800,
         num_classes= 6 + 1,
         bg_weight=0.4,
-        ignore_label=255
+        ignore_label=255,
+        max_lanes = max_lanes,
+        test_parameters = dict(conf_threshold=0.40, nms_thres=50, nms_topk=max_lanes),
+        ori_img_w = 1280,
+        ori_img_h = 720,
+        cut_height = 160 
     )
 )
 

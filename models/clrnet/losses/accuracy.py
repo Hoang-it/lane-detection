@@ -33,7 +33,8 @@ def accuracy(pred, target, topk=1, thresh=None):
         accu = [pred.new_tensor(0.) for i in range(len(topk))]
         return accu[0] if return_single else accu
     
-    #print(f"pred.ndim {pred.ndim}")
+    # print(f"pred.ndim {pred.ndim}")
+    # print(f"target.ndim {target.ndim}")
     assert pred.ndim == 2 and target.ndim == 1
     assert pred.size(0) == target.size(0)
     assert maxk <= pred.size(1), \
@@ -81,23 +82,62 @@ class Accuracy(BaseMetric):
     
     
     def process(self, data_batch, data_samples):
-        pred = data_batch[0]
-        target = data_samples[0]
+        """Process one batch of data and predictions. The processed
+        Results should be stored in `self.results`, which will be used
+        to compute the metrics when all batches have been processed.
+
+        Args:
+            data_batch (Sequence[Tuple[Any, dict]]): A batch of data
+                from the dataloader.
+            data_samples (Sequence[dict]): A batch of outputs from
+                the model.
+        """
+        pred = data_samples[0]
+        target = data_samples[1]
         
-        print(f"data_batch {len(data_batch)}")
-        print(f"data_batch {data_batch[0].shape}")
-        print(f"data_samples {data_samples[1].shape}")
-        print(f"data_samples {len(data_samples)}")
-        score, gt = data_samples
+        # print(pred.shape)
+        # print(target.shape)
+        # print("=========================")
+        # for pre in pred:
+        #     if type(pre) is torch.Tensor:
+        #         print(pre.shape)
+        #         print(pre[0])
+        #     else:
+        #         print(pre['img'].shape)
+        #         print(pre['meta'])
+        # print("=========================")
+        # for tar in target:
+        #     if type(tar) is torch.Tensor:
+        #         print(tar.shape)
+        #     else:
+        #         print(tar['img'].shape)
+        #         print(tar['lane-line'].shape)
+        #         print(tar['meta'])
+        # print("=========================")
+        # print(pred[0][0])
+        # print(target.shape)
+        # print(f"data_batch {len(data_batch)}")
+        # print(f"data_batch {data_batch[0].shape}")
+        # print(f"data_samples {data_samples[1].shape}")
+        # print(f"data_samples {len(data_samples)}")
+        score, gt = data_batch
         # save the middle result of a batch to `self.results`
-        self.results.append({
-            'batch_size': len(gt),
-            'correct': line_iou(pred, target, 800),
-        })
+        correct = line_iou(pred, target, 800)
+        if len(self.results) == 0 or correct.shape[0] == self.results[-1]['correct'].shape[0]:
+            self.results.append({
+                'batch_size': len(gt),
+                'correct': correct,
+            })
     
     def compute_metrics(self, results):
+        batch_size = results[0]['batch_size']
+        last_size = results[-1]['batch_size']
+        
+        if last_size != batch_size:
+            del results[-1] # need to find a way to add last epoch acc
+                
         total_correct = sum(item['correct'] for item in results)
         total_size = sum(item['batch_size'] for item in results)
         # return the dict containing the eval results
         # the key is the name of the metric name
-        return dict(accuracy= 100 * total_correct / total_size)
+        return dict(accuracy= 100 * torch.sum(total_correct) / total_size)

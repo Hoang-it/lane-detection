@@ -299,7 +299,7 @@ class CLRHead(nn.Module):
             # if the prediction does not start at the bottom of the image,
             # extend its prediction until the x is outside the image
             mask = ~((((lane_xs[:start] >= 0.) & (lane_xs[:start] <= 1.)
-                       ).cpu().numpy()[::-1].cumprod()[::-1]).astype(np.bool))
+                       ).cpu().numpy()[::-1].cumprod()[::-1]).astype(np.bool_))
             lane_xs[end + 1:] = -2
             lane_xs[:start][mask] = -2
             lane_ys = self.prior_ys[lane_xs >= 0]
@@ -307,8 +307,8 @@ class CLRHead(nn.Module):
             lane_xs = lane_xs.flip(0).double()
             lane_ys = lane_ys.flip(0)
 
-            lane_ys = (lane_ys * (self.cfg.ori_img_h - self.cfg.cut_height) +
-                       self.cfg.cut_height) / self.cfg.ori_img_h
+            lane_ys = (lane_ys * (self.cfg.get('ori_img_h') - self.cfg.get('cut_height')) +
+                       self.cfg.get('cut_height')) / self.cfg.get('ori_img_h')
             if len(lane_xs) <= 1:
                 continue
             points = torch.stack(
@@ -452,7 +452,7 @@ class CLRHead(nn.Module):
         decoded = []
         for predictions in output:
             # filter out the conf lower than conf threshold
-            threshold = self.cfg.test_parameters.conf_threshold
+            threshold = self.cfg.get('test_parameters').get('conf_threshold')
             scores = softmax(predictions[:, :2])[:, 1]
             keep_inds = scores >= threshold
             predictions = predictions[keep_inds]
@@ -468,15 +468,21 @@ class CLRHead(nn.Module):
             nms_predictions[...,
                             5:] = nms_predictions[..., 5:] * (self.img_w - 1)
 
+            # print(type(nms_predictions))
+            # print(type(scores))
+            # print(type(self.cfg.get('test_parameters').get('nms_thres')))
+            # print(type(self.cfg.get('test_parameters').get('max_lanes')))
             keep, num_to_keep, _ = nms(
                 nms_predictions,
                 scores,
-                overlap=self.cfg.test_parameters.nms_thres,
-                top_k=self.cfg.max_lanes)
+                overlap=float(self.cfg.get('test_parameters').get('nms_thres')),
+                top_k=int(self.cfg.get('max_lanes'))
+                )
             keep = keep[:num_to_keep]
             predictions = predictions[keep]
 
             if predictions.shape[0] == 0:
+                print("can't found lanes")
                 decoded.append([])
                 continue
 

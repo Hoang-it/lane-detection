@@ -113,7 +113,7 @@ def build_tusimple_dataloader(root: str = r'F:\LuanVan\Datasets\TUSimple'):
         img_w = 800, 
         num_points = 72,
         max_lanes = 5,
-        size_limit = 32000
+        size_limit = 32
     )
 
     from models.clrnet.dataset.process.generate_lane_line import GenerateLaneLine
@@ -160,14 +160,38 @@ def build_tusimple_dataloader(root: str = r'F:\LuanVan\Datasets\TUSimple'):
 
     val_process = [
         GenerateLaneLine(
-            cfg=cfg,
+            cfg=cfg, 
+            training=False,           
             transforms=[
                 dict(name='Resize',
                     parameters=dict(size=dict(height=img_h, width=img_w)),
                     p=1.0),
-            ],
-            training=False),
-        clrtransforms.ToTensor(keys=['img']),
+                dict(name='HorizontalFlip', parameters=dict(p=1.0), p=0.5),
+                dict(name='ChannelShuffle', parameters=dict(p=1.0), p=0.1),
+                dict(name='MultiplyAndAddToBrightness',
+                    parameters=dict(mul=(0.85, 1.15), add=(-10, 10)),
+                    p=0.6),
+                dict(name='AddToHueAndSaturation',
+                    parameters=dict(value=(-10, 10)),
+                    p=0.7),
+                dict(name='OneOf',
+                    transforms=[
+                        dict(name='MotionBlur', parameters=dict(k=(3, 5))),
+                        dict(name='MedianBlur', parameters=dict(k=(3, 5)))
+                    ],
+                    p=0.2),
+                dict(name='Affine',
+                    parameters=dict(translate_percent=dict(x=(-0.1, 0.1),
+                                                            y=(-0.1, 0.1)),
+                                    rotate=(-10, 10),
+                                    scale=(0.8, 1.2)),
+                    p=0.7),
+                dict(name='Resize',
+                    parameters=dict(size=dict(height=img_h, width=img_w)),
+                    p=1.0),
+            ]
+        ),
+        clrtransforms.ToTensor(keys=['img', 'lane_line']),
     ]
 
     dataset = TuSimple(

@@ -5,6 +5,7 @@ from models.clrnet.utils.dynamic_assign import assign
 from models.clrnet.losses.lineiou_loss import liou_loss
 import torch.nn.functional as F
 from models.clrnet.losses.accuracy import accuracy
+from models.clrnet.heads.clr_head import CLRHead
 
 class Detector(BaseModel):
     def __init__(self,
@@ -18,7 +19,7 @@ class Detector(BaseModel):
         self.backbone = backbone
         self.aggregator = aggregator
         self.neck = neck
-        self.heads = heads
+        self.heads : CLRHead = heads
         self.refine_layers = cfg.get('refine_layers')
         self.img_w = cfg.get('img_w')
         self.img_h = cfg.get('img_h')
@@ -167,14 +168,16 @@ class Detector(BaseModel):
             output = self.heads(fea, batch=batch)
             # print(f"out shape: {output}")
         else:
-            output = self.heads(fea)
+            output = self.heads(fea, batch=batch)
 
         if mode == 'loss':
             # print(f"out loss shape: {type(output)}")
             # print(f"data_samples shape: {data_samples}")
+            # print(f"Output {data_samples['lane_line']}")
             loss = self.loss(output, data_samples)
             # print(f"loss {loss}")
             return dict(loss=loss.get('loss'))
         elif mode == 'predict':
-            return output, data_samples
+            most_related = output[:, :5, :] #need to caculate how to get 5 lanes most relative
+            return most_related, data_samples['lane_line']
         return output
