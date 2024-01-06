@@ -6,6 +6,7 @@ from models.clrnet.utils.tusimple_metric import LaneEval
 import random
 from torch.utils.data import DataLoader
 from mmengine.runner import Runner
+import sys
 
 SPLIT_FILES = {
     'trainval': dict(anns=[r'train_set\label_data_0313.json', r'train_set\label_data_0601.json', r'train_set\label_data_0531.json'], prefix='train_set'),
@@ -28,6 +29,8 @@ class TuSimple(BaseDataset):
         max_lanes = 0
         for anno_file in self.anno_files:
             anno_file = osp.join(self.data_root, anno_file)
+            if sys.platform.startswith('linux'):
+                anno_file = anno_file.replace('\\', '/')
             if not osp.exists(anno_file):
                 continue
             with open(anno_file, 'r') as anno_obj:
