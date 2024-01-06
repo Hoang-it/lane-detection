@@ -24,6 +24,7 @@ if __name__ == '__main__':
     parser.add_argument('--dataset_root', default=None, help='folder to load dataset')
     parser.add_argument('--size_limit', default=None, help='limit image to load from dataset')
     parser.add_argument('--batch_size', default=None, help='batch size for each epoch')
+    parser.add_argument('--work_dir', default=None, help='folder save checkpoints')
     args = parser.parse_args()
     
     if args.dataset_root is None:
@@ -38,7 +39,7 @@ if __name__ == '__main__':
         
     runner = Runner(
         model=model,
-        work_dir='./work_di/tusimple',
+        work_dir=args.work_dir,
         train_dataloader=train_dataloader,
         optim_wrapper=dict(
             type=AmpOptimWrapper, # this help training more faster
@@ -55,7 +56,7 @@ if __name__ == '__main__':
         cfg=dict(model_wrapper_cfg=dict(type='MMFullyShardedDataParallel', cpu_offload=True)),
         # for resume  
         load_from= args.load_from, #'./work_di/tusimple/epoch_1.pth'
-        # resume=True,
+        resume=args.load_from is not None,
     )
     runner.train()
 
