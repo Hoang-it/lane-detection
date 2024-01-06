@@ -92,51 +92,39 @@ class TuSimple(BaseDataset):
         self.logger.info(result)
         return acc
          
-def build_tusimple_dataloader(root: str = r'F:\LuanVan\Datasets\TUSimple'):
-
+def build_tusimple_dataloader(root: str = r'F:\LuanVan\Datasets\TUSimple', batch_size: int = 16, size_limit: int = 320000):
     # define data loader
     import torch
     import torchvision.transforms as transforms
 
-    norm_cfg = dict(mean=[0.486, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize(**norm_cfg)
-    ])
+    from models.clrnet.dataset.process.generate_lane_line import GenerateLaneLine
+    import models.clrnet.dataset.process.transforms as  clrtransforms    
+    
+    img_h = 320
+    img_w = 800
 
     cfg = dict(
         cut_height = 0,
         img_norm = dict(mean=[103.939, 116.779, 123.68], std=[1., 1., 1.]),
         ori_img_w = 1280,
         ori_img_h = 720,
-        img_h = 320,
-        img_w = 800, 
+        img_h = img_h,
+        img_w = img_w, 
         num_points = 72,
         max_lanes = 5,
-        size_limit = 32
+        size_limit = size_limit
     )
 
-    from models.clrnet.dataset.process.generate_lane_line import GenerateLaneLine
-    import models.clrnet.dataset.process.transforms as  clrtransforms
-
-    img_h = 320
-    img_w = 800
 
     train_processes = [
         GenerateLaneLine(
             cfg=cfg,
             transforms=[
-                dict(name='Resize',
-                    parameters=dict(size=dict(height=img_h, width=img_w)),
-                    p=1.0),
+                dict(name='Resize', parameters=dict(size=dict(height=img_h, width=img_w)), p=1.0),
                 dict(name='HorizontalFlip', parameters=dict(p=1.0), p=0.5),
                 dict(name='ChannelShuffle', parameters=dict(p=1.0), p=0.1),
-                dict(name='MultiplyAndAddToBrightness',
-                    parameters=dict(mul=(0.85, 1.15), add=(-10, 10)),
-                    p=0.6),
-                dict(name='AddToHueAndSaturation',
-                    parameters=dict(value=(-10, 10)),
-                    p=0.7),
+                dict(name='MultiplyAndAddToBrightness', parameters=dict(mul=(0.85, 1.15), add=(-10, 10)), p=0.6),
+                dict(name='AddToHueAndSaturation', parameters=dict(value=(-10, 10)), p=0.7),
                 dict(name='OneOf',
                     transforms=[
                         dict(name='MotionBlur', parameters=dict(k=(3, 5))),
@@ -149,13 +137,10 @@ def build_tusimple_dataloader(root: str = r'F:\LuanVan\Datasets\TUSimple'):
                                     rotate=(-10, 10),
                                     scale=(0.8, 1.2)),
                     p=0.7),
-                dict(name='Resize',
-                    parameters=dict(size=dict(height=img_h, width=img_w)),
-                    p=1.0),
+                dict(name='Resize', parameters=dict(size=dict(height=img_h, width=img_w)), p=1.0),
             ]
         ),
-        clrtransforms.ToTensor(keys=['img', 'lane_line', 'seg']),
-        
+        clrtransforms.ToTensor(keys=['img', 'lane_line', 'seg']),        
     ]
 
     val_process = [
@@ -222,7 +207,6 @@ def build_tusimple_dataloader(root: str = r'F:\LuanVan\Datasets\TUSimple'):
     # idx = 1
     # imshow_lanes(dataset[idx]['img'], dataset[idx]['lanes'], show=True)
 
-    batch_size = 16 
     train_dataloader = dict(
         batch_size = batch_size,
         dataset = dataset,
