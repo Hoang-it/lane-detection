@@ -31,15 +31,20 @@ class TuSimple(BaseDataset):
             anno_file = osp.join(self.data_root, anno_file)
             if sys.platform.startswith('linux'):
                 anno_file = anno_file.replace('\\', '/')
+                
             if not osp.exists(anno_file):
                 continue
+            
             with open(anno_file, 'r') as anno_obj:
                 lines = anno_obj.readlines()
+                       
             for line in lines[:self.size_limit]:
                 data = json.loads(line)
                 y_samples = data['h_samples']
                 gt_lanes = data['lanes']
                 mask_path = data['raw_file'].replace('clips', 'seg_label')[:-3] + 'png'
+                if (self.prefix == 'train_set')  and not osp.exists(osp.join(self.data_root, self.prefix, mask_path)):
+                    continue
                 lanes = [[(x, y) for (x, y) in zip(lane, y_samples) if x >= 0]
                          for lane in gt_lanes]
                 lanes = [lane for lane in lanes if len(lane) > 0]

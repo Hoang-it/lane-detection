@@ -39,7 +39,7 @@ if __name__ == '__main__':
         
     runner = Runner(
         model=model,
-        work_dir=args.work_dir,
+        work_dir=args.work_dir if args.work_dir is not None else './work_di/tusimple',
         train_dataloader=train_dataloader,
         optim_wrapper=dict(
             type=AmpOptimWrapper, # this help training more faster
