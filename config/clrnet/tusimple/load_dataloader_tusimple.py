@@ -45,6 +45,8 @@ class TuSimple(BaseDataset):
                 mask_path = data['raw_file'].replace('clips', 'seg_label')[:-3] + 'png'
                 if (self.prefix == 'train_set')  and not osp.exists(osp.join(self.data_root, self.prefix, mask_path)):
                     continue
+                if not osp.exists(osp.join(self.data_root, self.prefix, data['raw_file'])):
+                    continue
                 lanes = [[(x, y) for (x, y) in zip(lane, y_samples) if x >= 0]
                          for lane in gt_lanes]
                 lanes = [lane for lane in lanes if len(lane) > 0]
