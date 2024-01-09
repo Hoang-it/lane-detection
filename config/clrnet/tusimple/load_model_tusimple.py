@@ -5,7 +5,7 @@ from models.clrnet.necks.fpn import FPN
 
 backbone = ResNetWrapper(
     resnet='resnet18',
-    pretrained=False,
+    pretrained=True,
     replace_stride_with_dilation=[False, False, False],
     out_conv=False,
 )

@@ -314,9 +314,11 @@ def _resnet(arch, block, layers, pretrained, progress, **kwargs):
     model = ResNet(block, layers, **kwargs)
     if pretrained:
         # print('pretrained model: ', model_urls[arch])
-        # state_dict = torch.load(model_urls[arch])['net']
+        print('Load from pretrained..')
         state_dict = load_state_dict_from_url(model_urls[arch])
         model.load_state_dict(state_dict, strict=False)
+        for param in model.parameters():
+            param.requires_grad = False
     return model
 
 
